@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%style{%d{ISO8601}}{black} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}: %msg%n%throwable"/>
+        </Console>
+
+        <RollingFile name="RollingFile"
+                     fileName="./logs/bom_Api.log"
+                     filePattern="./logs/$${date:yyyy-MM}/bom_Api-%d{-dd-MMMM-yyyy}-%i.log.gz">
+            <PatternLayout>
+                <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <!-- rollover on startup, daily and when the file reaches
+                    10 MegaBytes -->
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy
+                        size="10 MB"/>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+        <!-- LOG everything at trace level when testing-->
+        <Root level="trace">
+            <AppenderRef ref="Console"/>
+            <!--<AppenderRef ref="RollingFile"/>-->
+        </Root>
+        <!-- LOG "com.levis*" at TRACE level -->
+        <Logger name="com.levis" level="trace"/>
+
+
+    </Loggers>
+
+</Configuration>
+
+        <!--curl -X PUT http://localhost:9091/update/fabrics/create -H 'API-AUTH: Basic YmZ0cmVlYWRtaW46QkZUcmVlQDUwMQ==' -H 'Content-Type: application/json' -d '{"FACode": "test_facode", "Description": "before update"}' -->
