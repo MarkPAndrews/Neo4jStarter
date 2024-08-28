@@ -1,8 +1,6 @@
 package com.mpa.starter.config;
 
-import org.neo4j.driver.v1.AuthToken;
-import org.neo4j.driver.v1.Driver;
-import org.neo4j.driver.v1.GraphDatabase;
+import org.neo4j.driver.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +22,12 @@ public class Neo4jConfiguration {
         AuthToken token = neo4jProperties.getAuthToken();
         return GraphDatabase.driver(neo4jProperties.getUri(), token);
     }
+
+    @Bean
+    public SessionConfig neo4jSessionConfig() {
+        return SessionConfig.builder().withDatabase(neo4jProperties.getDatabaseName()).build();
+    }
+
 
 }
 

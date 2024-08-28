@@ -1,13 +1,13 @@
 package com.mpa.starter.config;
 
-import org.neo4j.driver.v1.AuthToken;
-import org.neo4j.driver.v1.AuthTokens;
+import org.neo4j.driver.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.net.URI;
+import java.util.function.Supplier;
 
 @Configuration
 public class Neo4jProperties {
@@ -33,6 +33,9 @@ public class Neo4jProperties {
 
     @Value("${neo4j.auth.password:#{null}}")
     private String password;
+
+    @Value("${neo4j.databaseName:neo4j}")
+    private String databaseName;
 
     @Value("${neo4j.auth.ticket:#{null}}")
     private String ticket;
@@ -100,6 +103,9 @@ public class Neo4jProperties {
     public void setTicket(String ticket) {
         this.ticket = ticket;
     }
+    public String getDatabaseName() {
+        return databaseName;
+    }
 
 
     /**
@@ -135,4 +141,5 @@ public class Neo4jProperties {
                 return AuthTokens.none();
         }
     }
+
 }

@@ -1,27 +1,24 @@
 package com.mpa.starter.controllers;
 
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.neo4j.driver.v1.AccessMode;
-import org.neo4j.driver.v1.Driver;
-import org.neo4j.driver.v1.Session;
-import static org.neo4j.driver.v1.Values.parameters;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.neo4j.driver.*;
+
+import static org.neo4j.driver.Values.parameters;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
-@Api(value = "Movies", description = "For testing and verification")
+//@Api(value = "Movies", description = "For testing and verification")
 @RestController
 @RequestMapping("/")
 public class MovieController {
@@ -31,9 +28,10 @@ public class MovieController {
     @Autowired
     Driver driver;
 
-
-    @ApiOperation(value = "Returns the current version of the application", response = String.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "The current version is...") })
+    @Autowired
+    SessionConfig sessionConfig;
+    @Operation(description = "Returns the current version of the application")
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "The current version is...") })
     @GetMapping("version")
     public String getVersion(HttpServletResponse response) {
         response.setStatus(200);
@@ -47,17 +45,19 @@ public class MovieController {
         return version;
     }
 
-    @ApiOperation(value = "Returns the requested movie by title", response = String.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "The movie is...") })
+    @Operation(description = "Returns the requested movie by title")
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "The movie is...") })
     @GetMapping("movie/{title}")
-    public Map<String, Object> getMovie(@PathVariable String title, HttpServletResponse response) {
+    public Map<String, Object> getMovie(@PathVariable String title, HttpServletResponse response, @RequestHeader("Authorization") String auth ) {
+        String bearerToken = auth.replace("Bearer ", "");
+
         response.setStatus(200);
         String query = "Match (m:Movie{title:$title}) Return m";
 
         logger.info(String.format("query=%s", query));
         // Make the query
-        try (Session session = driver.session(AccessMode.READ)) {
-            List<Map<String, Object>> result = session.readTransaction(tx ->
+        try (Session session = driver.session(Session.class,sessionConfig, AuthTokens.bearer(bearerToken))) {
+            List<Map<String, Object>> result = session.executeRead(tx ->
                     tx.run(query,
                             parameters("title",title))
                             .list(row -> row.get("m").asMap()));
@@ -70,8 +70,8 @@ public class MovieController {
         }
 
     }
-    @ApiOperation(value = "Returns the requested actor by name", response = String.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "The person is...") })
+    @Operation(description = "Returns the requested actor by name")
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "The person is...") })
     @GetMapping("person/{name}")
     public Map<String, Object> getActor(@PathVariable String name, HttpServletResponse response) {
         response.setStatus(200);
@@ -79,8 +79,8 @@ public class MovieController {
 
         logger.info(String.format("query=%s", query));
         // Make the query
-        try (Session session = driver.session(AccessMode.READ)) {
-            List<Map<String, Object>> result = session.readTransaction(tx ->
+        try (Session session = driver.session(sessionConfig)) {
+            List<Map<String, Object>> result = session.executeRead(tx ->
                     tx.run(query,
                             parameters("name",name))
                             .list(row -> row.get("p").asMap()));
@@ -93,20 +93,20 @@ public class MovieController {
         }
 
     }
-    @ApiOperation(value = "Returns the cast of the movie", response = String.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "The cast is...") })
-    @GetMapping("movie/{title}/cast")
-    public List<Map<String, Object>> getCast(@PathVariable String title, HttpServletResponse response) {
+    @Operation(description = "Returns the tanks")
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "The cast is...") })
+    @GetMapping("tanks")
+    public List<Map<String, Object>> getTanks(HttpServletResponse response, @RequestHeader("Authorization") String auth ) {
+        String bearerToken = auth.replace("Bearer ", "");
         response.setStatus(200);
-        String query = "Match (m:Movie{title:$title})<-[:ACTED_IN]-(p) Return p";
+        String query = "Match (n:Tank) Return n";
 
         logger.info(String.format("query=%s", query));
         // Make the query
-        try (Session session = driver.session(AccessMode.READ)) {
-            List<Map<String, Object>> result = session.readTransaction(tx ->
-                    tx.run(query,
-                            parameters("title",title))
-                            .list(row -> row.get("p").asMap()));
+        try (Session session = driver.session(Session.class,sessionConfig, AuthTokens.bearer(bearerToken))) {
+            List<Map<String, Object>> result = session.executeRead(tx ->
+                    tx.run(query)
+                            .list(row -> row.get("n").asMap()));
 
             if (result == null || result.size() == 0) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
